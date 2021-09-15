@@ -1,0 +1,106 @@
+zabbix_export:
+  version: '5.4'
+  date: '2021-09-15T04:08:52Z'
+  groups:
+    -
+      uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    -
+      uuid: 5ff8565e1cbf4a158087d1ce94b7612a
+      template: '00 Flexible ICMP'
+      name: '00 Flexible ICMP'
+      description: 'https://github.com/dmittr/zabbix-flexible-icmp'
+      groups:
+        -
+          name: Templates
+      items:
+        -
+          uuid: f4c5210291f1484e9f1695b8263a221f
+          name: 'ICMP ping'
+          type: SIMPLE
+          key: icmpping
+          delay: '{$ICMP_STATUS_INTERVAL}'
+          history: 1d
+          trends: 30d
+          valuemap:
+            name: 'Service state'
+          triggers:
+            -
+              uuid: 5f9b8a9261ba48e2a92384ded9fbdc5b
+              expression: 'max(/00 Flexible ICMP/icmpping,{$ICMP_STATUS_GAP})=0'
+              name: 'ICMP status'
+              priority: HIGH
+              description: '{$ICMP_ACTION}'
+        -
+          uuid: f2cd048b256c45a19f7a051f1b1fefcb
+          name: 'ICMP loss'
+          type: SIMPLE
+          key: icmppingloss
+          delay: '{$ICMP_TEST_INTERVAL}'
+          history: 1d
+          trends: 30d
+          value_type: FLOAT
+          units: '%'
+          triggers:
+            -
+              uuid: 4b8a26245bfb4ac5a67ba18446707790
+              expression: 'avg(/00 Flexible ICMP/icmppingloss,{$ICMP_TEST_GAP})>{$ICMP_LOSSPRC}'
+              name: 'ICMP packet loss'
+              priority: WARNING
+              dependencies:
+                -
+                  name: 'ICMP status'
+                  expression: 'max(/00 Flexible ICMP/icmpping,{$ICMP_STATUS_GAP})=0'
+        -
+          uuid: bdc0df5af3064b01b5eebd294ee2aed5
+          name: 'ICMP response time'
+          type: SIMPLE
+          key: icmppingsec
+          delay: '{$ICMP_TEST_INTERVAL}'
+          history: 1d
+          trends: 30d
+          value_type: FLOAT
+          units: s
+          triggers:
+            -
+              uuid: ae27ac9d71874b9a873aa67f7345eb90
+              expression: 'avg(/00 Flexible ICMP/icmppingsec,{$ICMP_TEST_GAP})>{$ICMP_MAXTIME}'
+              name: 'ICMP time'
+              priority: WARNING
+              dependencies:
+                -
+                  name: 'ICMP status'
+                  expression: 'max(/00 Flexible ICMP/icmpping,{$ICMP_STATUS_GAP})=0'
+      macros:
+        -
+          macro: '{$ICMP_ACTION}'
+        -
+          macro: '{$ICMP_LOSSPRC}'
+          value: '60'
+        -
+          macro: '{$ICMP_MAXTIME}'
+          value: '0.3'
+        -
+          macro: '{$ICMP_STATUS_GAP}'
+          value: '240'
+        -
+          macro: '{$ICMP_STATUS_INTERVAL}'
+          value: '60'
+        -
+          macro: '{$ICMP_TEST_GAP}'
+          value: '300'
+        -
+          macro: '{$ICMP_TEST_INTERVAL}'
+          value: '120'
+      valuemaps:
+        -
+          uuid: f9a992d967804ae296f39891f87b2ce7
+          name: 'Service state'
+          mappings:
+            -
+              value: '0'
+              newvalue: Down
+            -
+              value: '1'
+              newvalue: Up
