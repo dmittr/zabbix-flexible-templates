@@ -1,6 +1,6 @@
 zabbix_export:
   version: '5.4'
-  date: '2021-09-20T03:45:42Z'
+  date: '2021-09-20T05:44:08Z'
   groups:
     -
       uuid: 7df96b18c230490a9a0a9e2307226338
@@ -10,7 +10,7 @@ zabbix_export:
       uuid: 5ff8565e1cbf4a158087d1ce94b7612a
       template: 'Flexible ICMP'
       name: 'Flexible ICMP'
-      description: 'https://github.com/dmittr/zabbix-flexible-icmp'
+      description: 'https://github.com/dmittr/zabbix-flexible-templates'
       groups:
         -
           name: Templates
