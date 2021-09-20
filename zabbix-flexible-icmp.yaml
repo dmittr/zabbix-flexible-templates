@@ -1,6 +1,6 @@
 zabbix_export:
   version: '5.4'
-  date: '2021-09-15T04:08:52Z'
+  date: '2021-09-20T03:45:42Z'
   groups:
     -
       uuid: 7df96b18c230490a9a0a9e2307226338
@@ -8,91 +8,118 @@ zabbix_export:
   templates:
     -
       uuid: 5ff8565e1cbf4a158087d1ce94b7612a
-      template: '00 Flexible ICMP'
-      name: '00 Flexible ICMP'
+      template: 'Flexible ICMP'
+      name: 'Flexible ICMP'
       description: 'https://github.com/dmittr/zabbix-flexible-icmp'
       groups:
         -
           name: Templates
       items:
         -
-          uuid: f4c5210291f1484e9f1695b8263a221f
-          name: 'ICMP ping'
-          type: SIMPLE
-          key: icmpping
-          delay: '{$ICMP_STATUS_INTERVAL}'
-          history: 1d
-          trends: 30d
-          valuemap:
-            name: 'Service state'
-          triggers:
-            -
-              uuid: 5f9b8a9261ba48e2a92384ded9fbdc5b
-              expression: 'max(/00 Flexible ICMP/icmpping,{$ICMP_STATUS_GAP})=0'
-              name: 'ICMP status'
-              priority: HIGH
-              description: '{$ICMP_ACTION}'
-        -
           uuid: f2cd048b256c45a19f7a051f1b1fefcb
           name: 'ICMP loss'
           type: SIMPLE
-          key: icmppingloss
+          key: 'icmppingloss[,{$ICMP_TEST_PCNT},{$ICMP_TEST_PINT},{$ICMP_TEST_PSZ}]'
           delay: '{$ICMP_TEST_INTERVAL}'
-          history: 1d
-          trends: 30d
+          history: 30d
+          trends: 90d
           value_type: FLOAT
           units: '%'
           triggers:
             -
               uuid: 4b8a26245bfb4ac5a67ba18446707790
-              expression: 'avg(/00 Flexible ICMP/icmppingloss,{$ICMP_TEST_GAP})>{$ICMP_LOSSPRC}'
-              name: 'ICMP packet loss'
+              expression: 'avg(/Flexible ICMP/icmppingloss[,{$ICMP_TEST_PCNT},{$ICMP_TEST_PINT},{$ICMP_TEST_PSZ}],{$ICMP_TEST_GAP})>{$ICMP_LOSSPRC}'
+              name: 'ICMP packet loss over {$ICMP_LOSSPRC}'
               priority: WARNING
               dependencies:
                 -
-                  name: 'ICMP status'
-                  expression: 'max(/00 Flexible ICMP/icmpping,{$ICMP_STATUS_GAP})=0'
+                  name: 'ICMP no respnoce for {$ICMP_STATUS_GAP}sec.'
+                  expression: 'max(/Flexible ICMP/icmpping[,{$ICMP_STATUS_PCNT},{$ICMP_STATUS_PINT},{$ICMP_STATUS_PSZ}],{$ICMP_STATUS_GAP})=0'
         -
           uuid: bdc0df5af3064b01b5eebd294ee2aed5
           name: 'ICMP response time'
           type: SIMPLE
-          key: icmppingsec
+          key: 'icmppingsec[,{$ICMP_TEST_PCNT},{$ICMP_TEST_PINT},{$ICMP_TEST_PSZ}]'
           delay: '{$ICMP_TEST_INTERVAL}'
-          history: 1d
-          trends: 30d
+          history: 30d
+          trends: 90d
           value_type: FLOAT
           units: s
           triggers:
             -
               uuid: ae27ac9d71874b9a873aa67f7345eb90
-              expression: 'avg(/00 Flexible ICMP/icmppingsec,{$ICMP_TEST_GAP})>{$ICMP_MAXTIME}'
-              name: 'ICMP time'
+              expression: 'avg(/Flexible ICMP/icmppingsec[,{$ICMP_TEST_PCNT},{$ICMP_TEST_PINT},{$ICMP_TEST_PSZ}],{$ICMP_TEST_GAP})>{$ICMP_MAXTIME}'
+              name: 'ICMP time over {$ICMP_MAXTIME}'
               priority: WARNING
               dependencies:
                 -
-                  name: 'ICMP status'
-                  expression: 'max(/00 Flexible ICMP/icmpping,{$ICMP_STATUS_GAP})=0'
-      macros:
+                  name: 'ICMP no respnoce for {$ICMP_STATUS_GAP}sec.'
+                  expression: 'max(/Flexible ICMP/icmpping[,{$ICMP_STATUS_PCNT},{$ICMP_STATUS_PINT},{$ICMP_STATUS_PSZ}],{$ICMP_STATUS_GAP})=0'
         -
-          macro: '{$ICMP_ACTION}'
+          uuid: f4c5210291f1484e9f1695b8263a221f
+          name: 'ICMP responce'
+          type: SIMPLE
+          key: 'icmpping[,{$ICMP_STATUS_PCNT},{$ICMP_STATUS_PINT},{$ICMP_STATUS_PSZ}]'
+          delay: '{$ICMP_STATUS_INTERVAL}'
+          history: 30d
+          trends: 90d
+          valuemap:
+            name: 'Service state'
+          triggers:
+            -
+              uuid: 5f9b8a9261ba48e2a92384ded9fbdc5b
+              expression: 'max(/Flexible ICMP/icmpping[,{$ICMP_STATUS_PCNT},{$ICMP_STATUS_PINT},{$ICMP_STATUS_PSZ}],{$ICMP_STATUS_GAP})=0'
+              name: 'ICMP no respnoce for {$ICMP_STATUS_GAP}sec.'
+              priority: HIGH
+      macros:
         -
           macro: '{$ICMP_LOSSPRC}'
           value: '60'
+          description: 'Loss tolerance percentage'
         -
           macro: '{$ICMP_MAXTIME}'
           value: '0.3'
+          description: 'Time tolerance (sec)'
         -
           macro: '{$ICMP_STATUS_GAP}'
-          value: '240'
+          value: '120'
+          description: 'Test period for up/down detection'
         -
           macro: '{$ICMP_STATUS_INTERVAL}'
           value: '60'
+          description: 'How often to launch up/down checks (must be much less than ICMP_STATUS_GAP)'
+        -
+          macro: '{$ICMP_STATUS_PCNT}'
+          value: '3'
+          description: 'Count of packets for up/down checks'
+        -
+          macro: '{$ICMP_STATUS_PINT}'
+          value: '1000'
+          description: 'Time between packets for up/down checks'
+        -
+          macro: '{$ICMP_STATUS_PSZ}'
+          value: '500'
+          description: 'Packet size for up/down checks'
         -
           macro: '{$ICMP_TEST_GAP}'
           value: '300'
+          description: 'Test period for loss and time measurements'
         -
           macro: '{$ICMP_TEST_INTERVAL}'
           value: '120'
+          description: 'How often to launch loss and time checks (must be much less than ICMP_TEST_GAP)'
+        -
+          macro: '{$ICMP_TEST_PCNT}'
+          value: '10'
+          description: 'Count of packets for loss and time checks'
+        -
+          macro: '{$ICMP_TEST_PINT}'
+          value: '1000'
+          description: 'Time between packets for loss and time checks'
+        -
+          macro: '{$ICMP_TEST_PSZ}'
+          value: '500'
+          description: 'Packet size for loss and time checks'
       valuemaps:
         -
           uuid: f9a992d967804ae296f39891f87b2ce7
